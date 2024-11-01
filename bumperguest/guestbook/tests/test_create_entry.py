@@ -7,7 +7,7 @@ import json
 class CreateEntryTestCase(TestCase):
     def setUp(self):
         self.client = Client()
-        self.url = reverse("create_entry")  # Ensure the URL name matches your routing
+        self.url = reverse("entry-view")  # Ensure the URL name matches your routing
 
     def test_create_entry_success(self):
         # Prepare data for the request
@@ -29,7 +29,7 @@ class CreateEntryTestCase(TestCase):
         response_data = response.json()
         self.assertEqual(response_data["subject"], data["subject"])
         self.assertEqual(response_data["message"], data["message"])
-        self.assertEqual(response_data["user"], data["name"])
+        self.assertEqual(response_data["guest_name"], data["name"])
 
         # Assert the entry was created in the database
         entry = Entry.objects.get(id=response_data["id"])
@@ -63,7 +63,7 @@ class CreateEntryTestCase(TestCase):
         response_data = response.json()
         self.assertEqual(response_data["subject"], data["subject"])
         self.assertEqual(response_data["message"], data["message"])
-        self.assertEqual(response_data["user"], existing_guest.name)
+        self.assertEqual(response_data["guest_name"], existing_guest.name)
 
         # Assert the entry was created in the database
         entry = Entry.objects.get(id=response_data["id"])

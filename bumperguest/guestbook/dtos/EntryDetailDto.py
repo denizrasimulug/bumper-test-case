@@ -13,6 +13,6 @@ class EntryDetailDTO:
             "id": self.id,
             "subject": self.subject,
             "message": self.message,
-            "guest": self.guest_name,
+            "guest_name": self.guest_name,
             "created_date": self.created_date
         }

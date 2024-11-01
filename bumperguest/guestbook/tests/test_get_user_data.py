@@ -17,19 +17,19 @@ class GetUserDataTestCase(TestCase):
         Entry.objects.create(subject='Subject 5', message='Message 5', guest=self.user2)
 
     def test_get_user_data_success(self):
-        response = self.client.get(reverse('user_data_view'))  # Replace with your actual URL name
+        response = self.client.get(reverse('user-data-view'))  # Replace with your actual URL name
         self.assertEqual(response.status_code, 200)
 
         users = response.json()['users']
         self.assertEqual(len(users), 2)  # Check that two users are returned
-        self.assertEqual(users[0]['username'], self.user1.name)
-        self.assertEqual(users[1]['username'], self.user2.name)
+        self.assertEqual(users[0]['username'], self.user2.name)
+        self.assertEqual(users[1]['username'], self.user1.name)
 
     def test_get_user_data_latest_entry(self):
         # Modify the latest entry for user1
         latest_entry = Entry.objects.create(subject='Latest Subject', message='Latest Message', guest=self.user1)
 
-        response = self.client.get(reverse('user_data_view'))  # Replace with your actual URL name
+        response = self.client.get(reverse('user-data-view'))  # Replace with your actual URL name
         self.assertEqual(response.status_code, 200)
 
         users = response.json()['users']
@@ -39,7 +39,7 @@ class GetUserDataTestCase(TestCase):
         # Clear all entries
         Entry.objects.all().delete()
 
-        response = self.client.get(reverse('user_data_view'))  # Replace with your actual URL name
+        response = self.client.get(reverse('user-data-view'))  # Replace with your actual URL name
         self.assertEqual(response.status_code, 200)
 
         users = response.json()['users']

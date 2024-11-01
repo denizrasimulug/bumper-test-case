@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from bumperguest.guestbook.models import Entry, Guest
+from guestbook.models import Entry, Guest
 
 # Register your models here.
 

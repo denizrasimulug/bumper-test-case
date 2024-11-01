@@ -1,12 +1,12 @@
 class GetEntriesRequest:
-    def __init__(self, data):
+    def __init__(self, page_number, max_page):
         self.errors = []
         try:
-            self.page = int(data.get("page") or 1)
+            self.page = int(page_number)
         except TypeError:
             self.errors.append("Invalid page number, should be an integer.")
 
-        self.validate()
+        self.validate(max_page)
 
     def validate(self, max_page):
         if self.page < 1 or self.page > max_page:
