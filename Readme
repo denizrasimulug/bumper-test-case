@@ -24,7 +24,7 @@ To solve the user data query problem, I introduced a new field into the entry mo
 
 ULID is an uuid standart, where it embeds the timestamp of its creation time in the first bytes of the data, then a random part later; so that it is both sortable and globally unique. It is both a timestamp and an id.
 
-Without this field, I would have either used an inefficient subquery solution, or have to first get the latest creation times for each guest, then use the creation time itself as an identifier to get the entry data. We of course would not want to use the creation time as an id, but with ulid, we can.
+Without this field, I would have either used an inefficient subquery solution*, or have to first get the latest creation times for each guest, then use the creation time itself as an identifier to get the entry data. We of course would not want to use the creation time as an id, but with ulid, we can. I could not come up with an efficient solution without the ulid trick.
 
 Here are the comparisons of the loadtest for both the subquery solution and the ulid solution:
 
@@ -38,4 +38,38 @@ Entry Per User: 5
 Subquery: 50.4 seconds
 ULID: 0.2 seconds
 
+User Count: 10000
+Entry Per User: 100
+Subquery: -
+ULID: 0.6 seconds
 
+User Count: 10000
+Entry Per User: 1000
+Subquery: -
+ULID: 9.9 seconds
+
+NOTES
+
+- I did not extracted the orm usage out to a service layer, to prevent over engineering, but that would be required if we start adding some more functionality.
+- If I had more time I would come up with a solution for faster load testing, right now we populate the db again for each load test which takes too much amount of time.
+
+
+
+* The subquery solution:
+    # Query the Entry table, grouping by guest, and selecting the latest entry per guest
+    # Annotate each guest with the ID of their latest entry
+    latest_entry_ids = (
+        Entry.objects.filter(guest=OuterRef("pk"))
+        .order_by("-created_at")
+        .values("id")[:1]
+    )
+
+    # Now we fetch the latest entry for each guest using this annotation
+    guests_with_latest_entries = Guest.objects.annotate(
+        latest_entry_id=Subquery(latest_entry_ids)
+    )
+
+    # Query the latest entries using these IDs
+    latest_entries = Entry.objects.filter(
+        id__in=[guest.latest_entry_id for guest in guests_with_latest_entries]
+    ).order_by("-created_at")
