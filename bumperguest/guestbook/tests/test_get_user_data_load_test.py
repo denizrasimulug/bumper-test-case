@@ -3,7 +3,6 @@ from django.urls import reverse
 from guestbook.models import Guest, Entry
 from guestbook.utils.ulid import random_ulid
 import time
-from ulid import ULID
 
 
 @tag("load-test")
@@ -13,6 +12,8 @@ class GetUserDataLoadTestCase(TestCase):
 
     def _populate_db(self, user_count, entry_per_user):
         # Create a large number of users and entries for load testing
+        Guest.objects.all().delete()
+        Entry.objects.all().delete()
         guests = [Guest(name=f"User {i}") for i in range(user_count)]
         Guest.objects.bulk_create(guests)
         print("Created users")

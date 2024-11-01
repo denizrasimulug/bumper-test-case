@@ -24,18 +24,18 @@ To solve the user data query problem, I introduced a new field into the entry mo
 
 ULID is an uuid standart, where it embeds the timestamp of its creation time in the first bytes of the data, then a random part later; so that it is both sortable and globally unique. It is both a timestamp and an id.
 
-Without this field, we would either use an inefficient subquery solution, or have to first get the latest creation times for each guest, then use the creation time itself as an identifier to get the entry data. We of course would not want to use the creation time as an id, but with ulid, we can.
+Without this field, I would have either used an inefficient subquery solution, or have to first get the latest creation times for each guest, then use the creation time itself as an identifier to get the entry data. We of course would not want to use the creation time as an id, but with ulid, we can.
 
 Here are the comparisons of the loadtest for both the subquery solution and the ulid solution:
 
 User Count: 100
 Entry Per User: 10000
-Subquery: 5 seconds
+Subquery: 8.3 seconds
 ULID: 0.3 seconds
 
 User Count: 10000
 Entry Per User: 5
-Subquery: 214 seconds
-ULID: 0.4 seconds
+Subquery: 50.4 seconds
+ULID: 0.2 seconds
 
 
