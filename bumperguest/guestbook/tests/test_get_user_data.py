@@ -1,6 +1,7 @@
 from django.test import TestCase, tag
 from django.urls import reverse
-from ..models import Guest, Entry
+from guestbook.models import Guest, Entry
+from guestbook.utils.ulid import random_ulid
 
 @tag("integration-test")
 class GetUserDataTestCase(TestCase):
@@ -10,12 +11,12 @@ class GetUserDataTestCase(TestCase):
         self.user2 = Guest.objects.create(name="User 2")
 
         # Create entries for user1
-        Entry.objects.create(subject="Subject 1", message="Message 1", guest=self.user1)
-        Entry.objects.create(subject="Subject 2", message="Message 2", guest=self.user1)
+        Entry.objects.create(subject="Subject 1", message="Message 1", guest=self.user1, ulid=random_ulid(1))
+        Entry.objects.create(subject="Subject 2", message="Message 2", guest=self.user1, ulid=random_ulid(2))
         # Create entries for user2
-        Entry.objects.create(subject="Subject 3", message="Message 3", guest=self.user2)
-        Entry.objects.create(subject="Subject 4", message="Message 4", guest=self.user2)
-        Entry.objects.create(subject="Subject 5", message="Message 5", guest=self.user2)
+        Entry.objects.create(subject="Subject 3", message="Message 3", guest=self.user2, ulid=random_ulid(3))
+        Entry.objects.create(subject="Subject 4", message="Message 4", guest=self.user2, ulid=random_ulid(4))
+        Entry.objects.create(subject="Subject 5", message="Message 5", guest=self.user2, ulid=random_ulid(5))
 
     def test_get_user_data_success(self):
         response = self.client.get(reverse("user-data-view"))
@@ -24,12 +25,14 @@ class GetUserDataTestCase(TestCase):
         users = response.json()["users"]
         self.assertEqual(len(users), 2)  # Check that two users are returned
         self.assertEqual(users[0]["username"], self.user2.name)
+        self.assertEqual(users[0]["entry_count"], 3)
         self.assertEqual(users[1]["username"], self.user1.name)
+        self.assertEqual(users[1]["entry_count"], 2)
 
     def test_get_user_data_latest_entry(self):
         # Modify the latest entry for user1
         latest_entry = Entry.objects.create(
-            subject="Latest Subject", message="Latest Message", guest=self.user1
+            subject="Latest Subject", message="Latest Message", guest=self.user1, ulid=random_ulid(6)
         )
 
         response = self.client.get(reverse("user-data-view"))

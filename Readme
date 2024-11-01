@@ -1,7 +1,41 @@
 The Django project is contained in 'bumperguest' folder, with a single app inside it called 'guestbook'.
 
-Refer to Makefile files for relevant commands.
+Refer to Makefile for relevant commands.
 
 You can find the integration tests and the load test inside the tests folder.
 
-I also wanted to expand the case by automizing the load test data creation part, and dropped two manage.py commands inside the guest book app. But later I could not figure out a proper way (ie. fast and readable) to build the test data on sql-lite, so the next step would be to properly switch to postgres for the load-testing.
+INTEGRATION TESTING
+
+The integration tests run on an sqllite db, you can run them as follows:
+
+# make test
+
+LOAD TESTING
+
+For load testing, we use the postgresql. You can spin up an instance and run the tests by doing:
+
+# make run_postgre
+# make loadtest
+
+
+EXPLANATION OF SOLUTION
+
+To solve the user data query problem, I introduced a new field into the entry model, "ulid". 
+
+ULID is an uuid standart, where it embeds the timestamp of its creation time in the first bytes of the data, then a random part later; so that it is both sortable and globally unique. It is both a timestamp and an id.
+
+Without this field, we would either use an inefficient subquery solution, or have to first get the latest creation times for each guest, then use the creation time itself as an identifier to get the entry data. We of course would not want to use the creation time as an id, but with ulid, we can.
+
+Here are the comparisons of the loadtest for both the subquery solution and the ulid solution:
+
+User Count: 100
+Entry Per User: 10000
+Subquery: 5 seconds
+ULID: 0.3 seconds
+
+User Count: 10000
+Entry Per User: 5
+Subquery: 214 seconds
+ULID: 0.4 seconds
+
+

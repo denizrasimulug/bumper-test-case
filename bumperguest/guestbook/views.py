@@ -8,7 +8,7 @@ from guestbook.requests.GetEntriesRequest import GetEntriesRequest
 from guestbook.requests.CreateEntryRequest import CreateEntryRequest
 from django.views.decorators.http import require_GET
 from django.core.paginator import Paginator
-from django.db.models import Max, F, OuterRef, Subquery
+from django.db.models import Max, F, OuterRef, Subquery, Count
 
 
 class EntryView(View):
@@ -70,33 +70,30 @@ class EntryView(View):
         return JsonResponse(response_data)
 
 
+
 @require_GET
 def get_user_data(request):
-    # Get the latest entry's ID for each guest
-    latest_entry_subquery = Entry.objects.filter(
-        guest=OuterRef('pk')
-    ).order_by('-created_date').values('id')[:1]
+    
+    # Step 1: Annotate each Guest with the count of entries and the maximum ULID value for their latest entry
+    guest_entry_details = Guest.objects.annotate(
+        entry_count=Count('entry'),
+        latest_entry_ulid=Max('entry__ulid')
+    ).order_by('-latest_entry_ulid')
 
-    # Fetch all guests with the latest entry ID
-    guests_with_latest_entries = Guest.objects.annotate(
-        latest_entry_id=Subquery(latest_entry_subquery)
-    )
+    # Step 2: Retrieve the latest entries using the maximum ULIDs
+    latest_ulids = [guest.latest_entry_ulid for guest in guest_entry_details if guest.latest_entry_ulid]
+    latest_entries = {entry.ulid: entry for entry in Entry.objects.filter(ulid__in=latest_ulids)}
 
-    # Now fetch the latest entries for those IDs
-    latest_entries = Entry.objects.filter(id__in=guests_with_latest_entries.values('latest_entry_id'))
-
-    # Create a mapping of entry ID to entry for quick access
-    latest_entries_dict = {entry.id: entry for entry in latest_entries}
-
-    # Compute the user data
+    # Step 3: Compute the user data by matching guests to their latest entry
     users_data = [
         {
             "username": guest.name,
-            "last_entry": f"{latest_entries_dict[guest.latest_entry_id].subject} | {latest_entries_dict[guest.latest_entry_id].message}" if guest.latest_entry_id in latest_entries_dict else 'No entries',
-            "entry_id": guest.latest_entry_id,
+            "last_entry": f"{latest_entries[guest.latest_entry_ulid].subject} | {latest_entries[guest.latest_entry_ulid].message}",
+            "last_entry_id": latest_entries[guest.latest_entry_ulid].id,
+            "entry_count": guest.entry_count,
         }
-        for guest in guests_with_latest_entries
+        for guest in guest_entry_details if guest.latest_entry_ulid in latest_entries
     ]
-    response_data = {"users": users_data}
 
+    response_data = {"users": users_data}
     return JsonResponse(response_data)

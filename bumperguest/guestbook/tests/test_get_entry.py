@@ -1,6 +1,6 @@
 from django.test import TestCase, tag
 from django.urls import reverse
-from ..models import Guest, Entry
+from guestbook.models import Guest, Entry
 
 
 @tag("integration-test")

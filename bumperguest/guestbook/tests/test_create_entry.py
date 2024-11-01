@@ -1,6 +1,6 @@
 from django.test import TestCase, Client, tag
 from django.urls import reverse
-from ..models import Guest, Entry
+from guestbook.models import Guest, Entry
 import json
 
 

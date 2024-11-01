@@ -4,8 +4,8 @@ dev:
 
 migrations:
 	python manage.py makemigrations --settings=bumperguest.settings.dev
-# python manage.py makemigrations <app_name> -n <migration_name>
-# python manage.py makemigrations guestbook -n create_indices
+# python manage.py makemigrations <app_name> -n <migration_name> --settings=bumperguest.settings.dev
+# python manage.py makemigrations guestbook -n add_ulid_field_to_entry --settings=bumperguest.settings.dev
 
 migrate:
 	python manage.py migrate --settings=bumperguest.settings.dev
