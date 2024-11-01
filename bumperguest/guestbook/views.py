@@ -72,34 +72,31 @@ class EntryView(View):
 
 @require_GET
 def get_user_data(request):
-    # Query the Entry table, grouping by guest, and selecting the latest entry per guest
-    # Annotate each guest with the ID of their latest entry
-    latest_entry_ids = (
-        Entry.objects.filter(guest=OuterRef("pk"))
-        .order_by("-created_date")
-        .values("id")[:1]
+    # Get the latest entry's ID for each guest
+    latest_entry_subquery = Entry.objects.filter(
+        guest=OuterRef('pk')
+    ).order_by('-created_date').values('id')[:1]
+
+    # Fetch all guests with the latest entry ID
+    guests_with_latest_entries = Guest.objects.annotate(
+        latest_entry_id=Subquery(latest_entry_subquery)
     )
 
-    # Now we fetch the latest entry for each guest using this annotation
-    guests_with_latest_entries = Guest.objects.annotate(
-        latest_entry_id=Subquery(latest_entry_ids)
-    ).filter(latest_entry_id__isnull=False)
+    # Now fetch the latest entries for those IDs
+    latest_entries = Entry.objects.filter(id__in=guests_with_latest_entries.values('latest_entry_id'))
 
-    # Query the latest entries using these IDs
-    latest_entries = Entry.objects.filter(
-        id__in=[guest.latest_entry_id for guest in guests_with_latest_entries]
-    ).order_by("-created_date")
+    # Create a mapping of entry ID to entry for quick access
+    latest_entries_dict = {entry.id: entry for entry in latest_entries}
 
-    # Construct your response
+    # Compute the user data
     users_data = [
         {
-            "username": entry.guest.name,
-            "last_entry": f"{entry.subject} | {entry.message}",
-            "entry_id": entry.id,
+            "username": guest.name,
+            "last_entry": f"{latest_entries_dict[guest.latest_entry_id].subject} | {latest_entries_dict[guest.latest_entry_id].message}" if guest.latest_entry_id in latest_entries_dict else 'No entries',
+            "entry_id": guest.latest_entry_id,
         }
-        for entry in latest_entries
+        for guest in guests_with_latest_entries
     ]
-
     response_data = {"users": users_data}
 
     return JsonResponse(response_data)
