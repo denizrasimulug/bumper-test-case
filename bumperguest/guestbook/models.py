@@ -5,6 +5,11 @@ class Guest(models.Model):
     name = models.CharField(max_length=200)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["name"]),
+        ]
+
     def __str__(self):
         return self.name
 
@@ -14,6 +19,12 @@ class Entry(models.Model):
     message = models.TextField()
     guest = models.ForeignKey(Guest, on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["created_date"]),
+            models.Index(fields=["guest"]),
+        ]
 
     def __str__(self):
         return self.subject

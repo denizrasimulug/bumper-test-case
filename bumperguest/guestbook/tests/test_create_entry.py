@@ -1,9 +1,10 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, tag
 from django.urls import reverse
 from ..models import Guest, Entry
 import json
 
 
+@tag("integration-test")
 class CreateEntryTestCase(TestCase):
     def setUp(self):
         self.client = Client()
